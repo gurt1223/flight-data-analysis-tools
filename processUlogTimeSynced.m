@@ -1,23 +1,41 @@
 function processUlogTimeSynced(ulog_path, ulog_name, freq, CutoffFrequency)
-% Convert ULOG to MAT file and time synchronize the data
+
+% Convert ULOG to MAT file and Time Synchronize Data
 %
-% (C) 2024 Garrett D. Asper <garrettasper@vt.edu>
-% A Ulog file for analysis
+% DESCRIPTION:
+%   This script processes a ULog file by applying time synchronization and
+%   filtering. It supports two modes of operation:
+%   1. Interactive Mode: Without input arguments, it prompts the user to select
+%      a ULOG file for conversion through a graphical interface.
+%   2. Programmatic Mode: With provided ulog_path and ulog_name arguments, it directly
+%      processes the specified ULOG file without user interaction.
 %
-% Credit: Filtering elements of this code are thanks to Jeremy Hopwood
-% from jwhgit01 FlightTest-Tools/src/FlightDataProcessing/FlightData.m
+% INPUTS:
+%   ulog_path       - Path to the directory containing the ULog file (optional)
+%   ulog_name       - Name of the ULog file (optional)
+%   freq            - Desired frequency for time synchronization (Hz, optional)
+%   cutoffFrequency - Cutoff frequency for the low-pass filter (Hz, optional)
+%
+% OUTPUTS:
+%   A .mat file containing time-synchronized data
 % 
-% Description: This script can be run in two modes:
-%   - Interactive Mode: Without input arguments, it prompts the user to select
-%     a ULOG file for conversion through a graphical interface.
-%   - Programmatic Mode: With provided ulog_path and ulog_name arguments, it directly
-%     processes the specified ULOG file without user interaction.
+% USAGE:
+%   Interactive Mode: processUlogTimeSynced
+%   Programmatic Mode: processUlogTimeSynced('C:/data', 'flightData.ulg')
 %
-% MATLAB Requirements: Matlab R2023a or newer, UAV Toolbox
+% MATLAB REQUIREMENTS:
+%   MATLAB R2023a or newer, UAV Toolbox
 %
-% The following topics will be time-synchronized if available in the log
-% file:
+% WRITTEN BY:
+%   Garrett D. Asper
+%   Virginia Tech
+%   Email: garrettasper@vt.edu
 %
+% HISTORY:
+%   03 JUL 2024 - Created and debugged, GDA
+%
+% NOMENCLATURE:
+%   The following topics will be time-synchronized if available in the log file:
 %       actuator_controls_0
 %       actuator_outputs
 %       actuator_motors
@@ -43,18 +61,10 @@ function processUlogTimeSynced(ulog_path, ulog_name, freq, CutoffFrequency)
 %       vehicle_torque_setpoint
 %       vehicle_thrust_setpoint
 %
-% Input(s): 
-%     ulog_path (optional): Path to the directory containing the .ulg file
-%     ulog_name (optional): Name of the .ulg file to be processed
-%     freq (optional): Frequency for interpolation
-%
-% Output(s): .mat file containing time-synchronized data
-%
-% Usage:
-%   Interactive Mode: processUlogTimeSynced
-%   Programmatic Mode: processUlogTimeSynced('C:/data', 'flightData.ulg')
+% CREDIT:
+%   Filtering elements of this code are thanks to Jeremy Hopwood from 
+%   jwhgit01 FlightTest-Tools/src/FlightDataProcessing/FlightData.m
 
-% Error checks
 %% Input Validation and Error Handling
 
 % ~~~~ Interactive Mode ~~~~ (Define these and then run the script)
@@ -62,8 +72,7 @@ function processUlogTimeSynced(ulog_path, ulog_name, freq, CutoffFrequency)
         clear; clc; % Use clear if you want to reset the environment in interactive mode
         % Prompt the user to select the Ulog file using the file explorer
         ulog_path = strrep(mfilename('fullpath'), mfilename, '');
-        [ulog_name, ulog_path] = uigetfile([ulog_path, '*.ulg'], 'MultiSelect', 'off');
-        ulog_name = {ulog_name};
+        [ulog_name, ulog_path] = uigetfile([ulog_path, '*.ulg'], 'MultiSelect', 'on');
         CutoffFrequency = 6; % [Hz]
         ESC_filter = false; % determines whether ESC signals will be filtered
 
@@ -78,7 +87,10 @@ if nargin == 4
     ESC_filter = false;
 end
 
-tic % starts the timer
+% Convert ulog_name to cell array if it's a single file selected
+if ischar(ulog_name)
+    ulog_name = {ulog_name};
+end
 
 % Validate the provided or selected file
 if isequal(ulog_name,0) || isequal(ulog_path,0)
@@ -87,8 +99,12 @@ end
 
 dt = 1 / freq; % Time step
 
+%% Loop through each selected / inputted file
+for fileIdx = 1:length(ulog_name)
+tic % starts the timer
+
 % Import Ulog
-ulog_obj = ulogreader([ulog_path, ulog_name{1}]);
+ulog_obj = ulogreader([ulog_path, ulog_name{fileIdx}]);
 
 % Read Ulog data
 ulogData = readTopicMsgs(ulog_obj);
@@ -154,23 +170,23 @@ retimedData = struct();
     end
 
     % actuator_motors
-    if any(strcmp(ulogData.TopicNames,'actuator_motors'))
-        % Find the original sample rate
-        fs_vec(end+1) = 1/median(diff(seconds(actuator_motors.timestamp))); % Sampling frequency
-        topicNames_vec{end+1} = 'actuator_motors';
-
-        idx = find(strcmp(ulogData.TopicNames, 'actuator_motors'));
-
-        % Access the corresponding TopicMessages using the index
-        actuator_motors_data = ulogData.TopicMessages{idx};
-        % Extract the relevant data (assuming 'states' and 'covariances' are table variables)
-        
-        actuator_motors = actuator_motors_data(:,{'control'});
-
-        actuator_motors_retimed = retime(actuator_motors, Time, 'pchip');
-        clear actuator_motors_data
-        actuator_motors = actuator_motors_retimed;
-    end
+    % if any(strcmp(ulogData.TopicNames,'actuator_motors'))
+    %     % Find the original sample rate
+    %     fs_vec(end+1) = 1/median(diff(seconds(actuator_motors.timestamp))); % Sampling frequency
+    %     topicNames_vec{end+1} = 'actuator_motors';
+    % 
+    %     idx = find(strcmp(ulogData.TopicNames, 'actuator_motors'));
+    % 
+    %     % Access the corresponding TopicMessages using the index
+    %     actuator_motors_data = ulogData.TopicMessages{idx};
+    %     % Extract the relevant data (assuming 'states' and 'covariances' are table variables)
+    % 
+    %     actuator_motors = actuator_motors_data(:,{'control'});
+    % 
+    %     actuator_motors_retimed = retime(actuator_motors, Time, 'pchip');
+    %     clear actuator_motors_data
+    %     actuator_motors = actuator_motors_retimed;
+    % end
 
     % actuator_outputs
     if any(strcmp(ulogData.TopicNames,'actuator_outputs'))
@@ -228,19 +244,99 @@ retimedData = struct();
         cpuload = cpuload_retimed;
     end
     
-    % custom_internal
-    if any(strcmp(ulogData.TopicNames,'custom_internal'))
+    % fcs_signals
+    if any(strcmp(ulogData.TopicNames,'fcs_signals'))
         % Find the original sample rate
-        fs_vec(end+1) = 1/median(diff(seconds(custom_internal.timestamp))); % Sampling frequency
-        topicNames_vec{end+1} = 'custom_internal';
+        fs_vec(end+1) = 1/median(diff(seconds(fcs_signals.timestamp))); % Sampling frequency
+        topicNames_vec{end+1} = 'fcs_signals';
 
         % Retime
-        custom_internal = convertvars(custom_internal,vartype('numeric'),'double');
-        custom_internal_retimed = retime(custom_internal, Time, 'pchip');
-        custom_internal = custom_internal_retimed;
+        fcs_signals = convertvars(fcs_signals,vartype('numeric'),'double');
+        fcs_signals_retimed = retime(fcs_signals, Time, 'pchip');
+        fcs_signals = fcs_signals_retimed;
     end
 
-    % esc_status
+    % fcs_signals_aux
+    if any(strcmp(ulogData.TopicNames,'fcs_signals_aux'))
+        % Find the original sample rate
+        fs_vec(end+1) = 1/median(diff(seconds(fcs_signals_aux.timestamp))); % Sampling frequency
+        topicNames_vec{end+1} = 'fcs_signals_aux';
+    
+        % Retime
+        fcs_signals_aux = convertvars(fcs_signals_aux,vartype('numeric'),'double');
+        fcs_signals_aux_retimed = retime(fcs_signals_aux, Time, 'pchip');
+        fcs_signals_aux = fcs_signals_aux_retimed;
+    end
+
+
+    % gamma_signals
+    if any(strcmp(ulogData.TopicNames,'gamma_signals'))
+        % Find the original sample rate
+        fs_vec(end+1) = 1/median(diff(seconds(gamma_signals.timestamp))); % Sampling frequency
+        topicNames_vec{end+1} = 'gamma_signals';
+
+        % Retime
+        gamma_signals = convertvars(gamma_signals,vartype('numeric'),'double');
+        gamma_signals_retimed = retime(gamma_signals, Time, 'pchip');
+        gamma_signals = gamma_signals_retimed;
+    end
+
+    % % esc_status
+    % if any(strcmp(ulogData.TopicNames,'esc_status'))
+    %     % Find the index of 'esc_status' in the TopicNames array
+    %     idx = find(strcmp(ulogData.TopicNames, 'esc_status'));
+    % 
+    %     % Access the corresponding TopicMessages using the index
+    %     esc_status = ulogData.TopicMessages{idx};
+    %     timestamp_ = seconds(seconds(esc_status.timestamp));
+    % 
+    %     % Convert all variables in esc_status to double
+    %     allVars = vartype('numeric'); % Selects all numeric variables
+    %     esc_status = convertvars(esc_status, allVars, 'double');
+    % 
+    %     % Get number of ESCs
+    %     esc_count = esc_status.esc_count(1,1);
+    % 
+    %     for ii = 1:esc_count
+    %         % Process RPM and timestamp for each ESC
+    %         ni = double(esc_status.(['esc[' num2str(ii-1) '].esc_rpm']));
+    %         % Remove duplicate timestamp values and keep first sample
+    %         [ti,ia,~] = unique(esc_status.(['esc[' num2str(ii-1) '].timestamp']),'first');
+    %         tidd = double(ti)/1e6;
+    %         nidd = ni(ia);
+    %         esc_rpm = nidd; % defined the current ESCs RPMs over time
+    %         % Calculate the sampling frequency
+    %         timeInSeconds = tidd; % Ensure Time is in seconds
+    %         fs = 1/median(diff(timeInSeconds)); % Sampling frequency
+    %         fs_esc_status(ii) = fs;
+    % 
+    %         % Check if filtering is needed based on cutoff frequency and sampling rate
+    %         if floor(fs) > 2*CutoffFrequency && ESC_filter == true
+    %             Wn = 2*CutoffFrequency/fs; % Fraction of the Nyquist rate
+    %             [b, a] = butter(5, Wn); % 5th order low-pass Butterworth filter
+    % 
+    %             % Apply the filter to each column of esc_rpm
+    %             esc_rpm = filtfilt(b, a, nidd);
+    %         end
+    % 
+    %         % Finally, assign retimed and possibly filtered RPM data back to esc_status
+    %         esc_rpm_ = timetable(seconds(tidd), esc_rpm);
+    %         esc_status_retimed(:,ii) = retime(esc_rpm_,Time, 'pchip');
+    %     end
+    % 
+    %         % Generate new names for the esc_rpm columns
+    %         numMotors = esc_count; % Adjust this based on how many 'esc_rpmX' columns you have
+    %         for motorIndex = 0:(numMotors-1)
+    %             newVariableNames{motorIndex+1} = sprintf('esc[%d].esc_rpm', motorIndex);
+    %         end
+    % 
+    %         % Apply the new variable names to the timetable
+    %         esc_status = renamevars(esc_status_retimed, allVars, newVariableNames);
+    %         fs_vec(end+1) = median(fs_esc_status);
+    %         topicNames_vec{end+1} = 'esc_status';
+    % end
+
+      % esc_status
     if any(strcmp(ulogData.TopicNames,'esc_status'))
         % Find the index of 'esc_status' in the TopicNames array
         idx = find(strcmp(ulogData.TopicNames, 'esc_status'));
@@ -253,46 +349,11 @@ retimedData = struct();
         allVars = vartype('numeric'); % Selects all numeric variables
         esc_status = convertvars(esc_status, allVars, 'double');
         
-        % Get number of ESCs
-        esc_count = esc_status.esc_count(1,1);
-    
-        for ii = 1:esc_count
-            % Process RPM and timestamp for each ESC as your colleague did
-            ni = double(esc_status.(['esc[' num2str(ii-1) '].esc_rpm']));
-            % Remove duplicate timestamp values and keep first sample
-            [ti,ia,~] = unique(esc_status.(['esc[' num2str(ii-1) '].timestamp']),'first');
-            tidd = double(ti)/1e6;
-            nidd = ni(ia);
-            esc_rpm = nidd; % defined the current ESCs RPMs over time
-            % Calculate the sampling frequency
-            timeInSeconds = tidd; % Ensure Time is in seconds
-            fs = 1/median(diff(timeInSeconds)); % Sampling frequency
-            fs_esc_status(ii) = fs;
-            
-            % Check if filtering is needed based on cutoff frequency and sampling rate
-            if floor(fs) > 2*CutoffFrequency && ESC_filter == true
-                Wn = 2*CutoffFrequency/fs; % Fraction of the Nyquist rate
-                [b, a] = butter(5, Wn); % 5th order low-pass Butterworth filter
-
-                % Apply the filter to each column of esc_rpm
-                esc_rpm = filtfilt(b, a, nidd);
-            end
+        % Retime the ESC signals
+        esc_status_retimed = retime(esc_status, Time, 'pchip');
+        esc_status = esc_status_retimed;
         
-            % Finally, assign retimed and possibly filtered RPM data back to esc_status
-            esc_rpm_ = timetable(seconds(tidd), esc_rpm);
-            esc_status_retimed(:,ii) = retime(esc_rpm_,Time, 'pchip');
-        end
-    
-            % Generate new names for the esc_rpm columns
-            numMotors = 4; % Adjust this based on how many 'esc_rpmX' columns you have
-            for motorIndex = 0:(numMotors-1)
-                newVariableNames{motorIndex+1} = sprintf('esc[%d].esc_rpm', motorIndex);
-            end
-           
-            % Apply the new variable names to the timetable
-            esc_status = renamevars(esc_status_retimed, allVars, newVariableNames);
-            fs_vec(end+1) = median(fs_esc_status);
-            topicNames_vec{end+1} = 'esc_status';
+
     end
 
 
@@ -633,8 +694,8 @@ retimedData = struct();
         disp('************************************************************')
     end
 
-    matFileName = ulog_name;
-    matfile_path = strrep([ulog_path, ulog_name{1}], '.ulg', '.mat')
+    matFileName = ulog_name{fileIdx};
+    matfile_path = strrep([ulog_path, ulog_name{fileIdx}], '.ulg', '.mat');
     
     % Create the directory if it doesn't exist
     if ~isfolder(fileparts(matfile_path))
@@ -650,4 +711,5 @@ retimedData = struct();
 
     fprintf('Processing completed in %.2f seconds.\n', processTime);
     fprintf('The .mat file path is:\n%s\n', matfile_path);    
+end
 end
