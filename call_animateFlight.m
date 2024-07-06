@@ -18,10 +18,10 @@
 % THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND
 
 % Define the name of the .ulg file containing the flight data
-ulog_name = '19_40_36.ulg';
+ulog_name = '20240327_Flight2.ulg';
 
 % Define the path to the directory containing the .ulg file
-ulog_path = 'C:\Users\gasper\OneDrive - NASA\Documents\IMPACT Vehicle\Aircraft Logbook\20240702\';
+ulog_path = 'C:\Users\gurt1\OneDrive - Virginia Tech\Documents\NSL Research\Flight Logs - HATCH\20240327\';
 
 freq = 60; % [Hz] (also results in frames per second of video)
 cutoffFrequency = 10; % [Hz] for filtering angular rates

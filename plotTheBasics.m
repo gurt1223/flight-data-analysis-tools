@@ -121,13 +121,13 @@ switch selection
         fig = stacked_12dof(seconds(time_seconds), log.all_12dof);
         set(get(gcf,'Children'),'FontSize', 12);
     case 2
-        exportTitle = 'IMPACT Innerloop Controller Performance';
+        exportTitle = 'Innerloop Controller Performance';
         inner = [log.phi, log.theta, log.r];
         inner_sp = [log.phi_sp, log.theta_sp, log.r_sp];
         fig = innerLoop(time_seconds, inner, inner_sp);
         set(get(gcf,'Children'),'FontSize', 14);
     case 3
-        exportTitle = 'IMPACT Altitude Hold Performance';
+        exportTitle = 'Altitude Hold Performance';
         fig = alt_vs_sp(time_seconds, log.alt_ft, log.alt_ft_sp);
         set(get(gcf,'Children'),'FontSize', 14);
     case 4

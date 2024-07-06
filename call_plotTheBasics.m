@@ -27,10 +27,10 @@
 clear; clc;
 
 % Define the name of the .mat file containing the flight data
-mat_name = '19_40_36.mat';
+mat_name = '20240327_Flight2.mat';
 
 % Define the path to the directory containing the .mat file
-mat_path = 'C:\Users\gasper\OneDrive - NASA\Documents\IMPACT Vehicle\Aircraft Logbook\20240702\';
+mat_path = 'C:\Users\gurt1\OneDrive - Virginia Tech\Documents\NSL Research\Flight Logs - HATCH\20240327\';
 
 % Choose the selection number based on the desired plot
 selection = 4;

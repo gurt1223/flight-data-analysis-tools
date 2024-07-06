@@ -28,10 +28,10 @@
 clear; clc;
 
 % Define the name of the .ulg file containing the flight data
-ulog_name = '19_40_36.ulg';
+ulog_name = '20240327_Flight2.ulg';
 
 % Define the path to the directory containing the .ulg file
-ulog_path = 'C:\Users\gasper\OneDrive - NASA\Documents\IMPACT Vehicle\Aircraft Logbook\20240702\';
+ulog_path = 'C:\Users\gurt1\OneDrive - Virginia Tech\Documents\NSL Research\Flight Logs - HATCH\20240327\';
 
 % Define processing parameters
 freq = 100; % Desired frequency for time synchronization [Hz]
