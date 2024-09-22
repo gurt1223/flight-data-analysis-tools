@@ -47,7 +47,7 @@ for motor_Idx = 1:num_motors
     if motor_number == -1
         subplot(num_rows, num_cols, motor_Idx); 
     else
-        subplot(1, 1, motor_Idx); 
+        %subplot(1, 1, motor_Idx); 
     end
 
     plot(time_seconds, rpm_sp(:,motor_Idx), '-.', 'DisplayName', 'RPM Setpoint');
