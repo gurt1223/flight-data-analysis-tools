@@ -340,6 +340,8 @@ retimedData = struct();
     if any(strcmp(ulogData.TopicNames,'esc_status'))
         % Find the index of 'esc_status' in the TopicNames array
         idx = find(strcmp(ulogData.TopicNames, 'esc_status'));
+        fs_vec(end+1) = 1/median(diff(seconds(esc_status.timestamp))); % Sampling frequency
+        topicNames_vec{end+1} = 'esc_status';
     
         % Access the corresponding TopicMessages using the index
         esc_status = ulogData.TopicMessages{idx};

@@ -51,27 +51,27 @@ function log = createLogStructure(mat_name, mat_path)
     log.r = vehicle_angular_velocity.xyz(:,3)*(180/pi);
 
     % Vertical Velocity (ft/s)
-    log.vv_fps = fcs_signals.px4_data(:,9); 
+    log.vv_fps = fcs_signals.sensor_data(:,12); 
 
     % Altitude (ft)
-    log.alt_ft = fcs_signals.px4_data(:,13);
+    log.alt_ft = fcs_signals.sensor_data(:,9);
 
-    % Vertical Velocity Setpoint (ft/s)
-    log.vv_fps_sp = fcs_signals_aux.fcs_data(:,16); 
+    % % Vertical Velocity Setpoint (ft/s)
+    % log.vv_fps_sp = fcs_signals_aux.fcs_data(:,16); 
 
     % Innerloop commands (deg || deg/s)
-    log.phi_sp = fcs_signals.att_cmd(:,1)*(180/pi); % roll angle (deg)
-    log.theta_sp = fcs_signals.att_cmd(:,2)*(180/pi); % pitch angle (deg)
-    log.r_sp = fcs_signals.att_cmd(:,3)*(180/pi); % yaw angular rate (deg/s)
+    log.phi_sp = fcs_signals.exp_ctrl_data(:,1)*(180/pi); % roll angle (deg)
+    log.theta_sp = fcs_signals.exp_ctrl_data(:,2)*(180/pi); % pitch angle (deg)
+    log.r_sp = fcs_signals.exp_ctrl_data(:,7)*(180/pi); % yaw angular rate (deg/s)
 
     num_motors = 4; % Number of motors / signals present on esc_status
 
     % Preallocate the log.rpm and log.rpm_sp arrays
     log.rpm = zeros(size(esc_status.('esc[0].esc_rpm'), 1), num_motors);
-    log.rpm_sp = zeros(size(fcs_signals.eng_cmd, 1), num_motors);
+    log.rpm_sp = zeros(size(fcs_signals.eng_cmds, 1), num_motors);
     
     for motorIndex = 1:num_motors
-        log.rpm(:, motorIndex) = esc_status.(sprintf('esc[%d].esc_rpm', motorIndex));
-        log.rpm_sp(:, motorIndex) = fcs_signals.eng_cmd(:, motorIndex);
+        log.rpm(:, motorIndex) = esc_status.(sprintf('esc[%d].esc_rpm', motorIndex-1));
+        log.rpm_sp(:, motorIndex) = fcs_signals.eng_cmds(:, motorIndex);
     end
 end
