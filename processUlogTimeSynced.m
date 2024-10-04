@@ -31,6 +31,10 @@ function processUlogTimeSynced(ulog_path, ulog_name, freq, CutoffFrequency)
 %   Virginia Tech
 %   Email: garrettasper@vt.edu
 %
+%   Patrick E. Corrigan
+%   Virginia Tech
+%   Email: patrickcorrigan@vt.edu
+%
 % HISTORY:
 %   03 JUL 2024 - Created and debugged, GDA
 %
@@ -161,7 +165,7 @@ retimedData = struct();
    
     % Perform retiming if the topic is present
 
-    % actuator_controls_0
+    %% actuator_controls_0
     if any(strcmp(ulogData.TopicNames,'actuator_controls_0'))
         fs_vec(end+1) = 1/median(diff(seconds(actuator_controls_0.timestamp)));
         topicNames_vec{end+1} = 'actuator_controls_0';
@@ -169,26 +173,7 @@ retimedData = struct();
         actuator_controls_0 = actuator_controls_0_retimed;
     end
 
-    % actuator_motors
-    % if any(strcmp(ulogData.TopicNames,'actuator_motors'))
-    %     % Find the original sample rate
-    %     fs_vec(end+1) = 1/median(diff(seconds(actuator_motors.timestamp))); % Sampling frequency
-    %     topicNames_vec{end+1} = 'actuator_motors';
-    % 
-    %     idx = find(strcmp(ulogData.TopicNames, 'actuator_motors'));
-    % 
-    %     % Access the corresponding TopicMessages using the index
-    %     actuator_motors_data = ulogData.TopicMessages{idx};
-    %     % Extract the relevant data (assuming 'states' and 'covariances' are table variables)
-    % 
-    %     actuator_motors = actuator_motors_data(:,{'control'});
-    % 
-    %     actuator_motors_retimed = retime(actuator_motors, Time, 'pchip');
-    %     clear actuator_motors_data
-    %     actuator_motors = actuator_motors_retimed;
-    % end
-
-    % actuator_outputs
+    %% actuator_outputs
     if any(strcmp(ulogData.TopicNames,'actuator_outputs'))
         if exist('actuator_outputs', 'var') == 1
             % Find the original sample rate
@@ -222,7 +207,7 @@ retimedData = struct();
         
     end
     
-    % battery_status
+    %% battery_status
     if any(strcmp(ulogData.TopicNames,'battery_status'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(battery_status.timestamp))); % Sampling frequency
@@ -233,7 +218,7 @@ retimedData = struct();
         battery_status = battery_status_retimed;
     end
     
-    % cpuload
+    %% cpuload
     if any(strcmp(ulogData.TopicNames,'cpuload'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(cpuload.timestamp))); % Sampling frequency
@@ -244,7 +229,7 @@ retimedData = struct();
         cpuload = cpuload_retimed;
     end
     
-    % fcs_signals
+    %% fcs_signals
     if any(strcmp(ulogData.TopicNames,'fcs_signals'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(fcs_signals.timestamp))); % Sampling frequency
@@ -256,7 +241,7 @@ retimedData = struct();
         fcs_signals = fcs_signals_retimed;
     end
 
-    % fcs_signals_aux
+    %% fcs_signals_aux
     if any(strcmp(ulogData.TopicNames,'fcs_signals_aux'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(fcs_signals_aux.timestamp))); % Sampling frequency
@@ -267,76 +252,8 @@ retimedData = struct();
         fcs_signals_aux_retimed = retime(fcs_signals_aux, Time, 'pchip');
         fcs_signals_aux = fcs_signals_aux_retimed;
     end
-
-
-    % gamma_signals
-    if any(strcmp(ulogData.TopicNames,'gamma_signals'))
-        % Find the original sample rate
-        fs_vec(end+1) = 1/median(diff(seconds(gamma_signals.timestamp))); % Sampling frequency
-        topicNames_vec{end+1} = 'gamma_signals';
-
-        % Retime
-        gamma_signals = convertvars(gamma_signals,vartype('numeric'),'double');
-        gamma_signals_retimed = retime(gamma_signals, Time, 'pchip');
-        gamma_signals = gamma_signals_retimed;
-    end
-
-    % % esc_status
-    % if any(strcmp(ulogData.TopicNames,'esc_status'))
-    %     % Find the index of 'esc_status' in the TopicNames array
-    %     idx = find(strcmp(ulogData.TopicNames, 'esc_status'));
-    % 
-    %     % Access the corresponding TopicMessages using the index
-    %     esc_status = ulogData.TopicMessages{idx};
-    %     timestamp_ = seconds(seconds(esc_status.timestamp));
-    % 
-    %     % Convert all variables in esc_status to double
-    %     allVars = vartype('numeric'); % Selects all numeric variables
-    %     esc_status = convertvars(esc_status, allVars, 'double');
-    % 
-    %     % Get number of ESCs
-    %     esc_count = esc_status.esc_count(1,1);
-    % 
-    %     for ii = 1:esc_count
-    %         % Process RPM and timestamp for each ESC
-    %         ni = double(esc_status.(['esc[' num2str(ii-1) '].esc_rpm']));
-    %         % Remove duplicate timestamp values and keep first sample
-    %         [ti,ia,~] = unique(esc_status.(['esc[' num2str(ii-1) '].timestamp']),'first');
-    %         tidd = double(ti)/1e6;
-    %         nidd = ni(ia);
-    %         esc_rpm = nidd; % defined the current ESCs RPMs over time
-    %         % Calculate the sampling frequency
-    %         timeInSeconds = tidd; % Ensure Time is in seconds
-    %         fs = 1/median(diff(timeInSeconds)); % Sampling frequency
-    %         fs_esc_status(ii) = fs;
-    % 
-    %         % Check if filtering is needed based on cutoff frequency and sampling rate
-    %         if floor(fs) > 2*CutoffFrequency && ESC_filter == true
-    %             Wn = 2*CutoffFrequency/fs; % Fraction of the Nyquist rate
-    %             [b, a] = butter(5, Wn); % 5th order low-pass Butterworth filter
-    % 
-    %             % Apply the filter to each column of esc_rpm
-    %             esc_rpm = filtfilt(b, a, nidd);
-    %         end
-    % 
-    %         % Finally, assign retimed and possibly filtered RPM data back to esc_status
-    %         esc_rpm_ = timetable(seconds(tidd), esc_rpm);
-    %         esc_status_retimed(:,ii) = retime(esc_rpm_,Time, 'pchip');
-    %     end
-    % 
-    %         % Generate new names for the esc_rpm columns
-    %         numMotors = esc_count; % Adjust this based on how many 'esc_rpmX' columns you have
-    %         for motorIndex = 0:(numMotors-1)
-    %             newVariableNames{motorIndex+1} = sprintf('esc[%d].esc_rpm', motorIndex);
-    %         end
-    % 
-    %         % Apply the new variable names to the timetable
-    %         esc_status = renamevars(esc_status_retimed, allVars, newVariableNames);
-    %         fs_vec(end+1) = median(fs_esc_status);
-    %         topicNames_vec{end+1} = 'esc_status';
-    % end
-
-      % esc_status
+   
+      %% esc_status
     if any(strcmp(ulogData.TopicNames,'esc_status'))
         % Find the index of 'esc_status' in the TopicNames array
         idx = find(strcmp(ulogData.TopicNames, 'esc_status'));
@@ -359,7 +276,7 @@ retimedData = struct();
     end
 
 
-    % estimator_states
+    %% estimator_states
     if any(strcmp(ulogData.TopicNames, 'estimator_states'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(estimator_states.timestamp))); % Sampling frequency
@@ -380,7 +297,7 @@ retimedData = struct();
         estimator_states = estimator_states_retimed;
     end
     
-    % estimator_status
+    %% estimator_status
     if any(strcmp(ulogData.TopicNames,'estimator_status'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(estimator_status.timestamp))); % Sampling frequency
@@ -400,7 +317,7 @@ retimedData = struct();
         estimator_status = estimator_status_retimed;
     end
     
-    % estimator_event_flags
+    %% estimator_event_flags
     if any(strcmp(ulogData.TopicNames,'estimator_event_flags_1')) || any(strcmp(ulogData.TopicNames,'estimator_event_flags'))
         if any(strcmp(ulogData.TopicNames,'estimator_event_flags_1'))
             % Find the original sample rate
@@ -420,13 +337,13 @@ retimedData = struct();
         estimator_event_flags = estimator_event_flags_retimed;
     end
 
-    % event
+    %% event
     if any(strcmp(ulogData.TopicNames,'event'))        
         % Retiming has not yet been incorporated for this topic
         disp('event')
     end
     
-    % input_rc
+    %% input_rc
     if any(strcmp(ulogData.TopicNames,'input_rc'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(input_rc.timestamp))); % Sampling frequency
@@ -437,7 +354,7 @@ retimedData = struct();
         input_rc = input_rc_retimed;
     end
         
-    % sensor_combined
+    %% sensor_combined
     if any(strcmp(ulogData.TopicNames,'sensor_combined'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(sensor_combined.timestamp))); % Sampling frequency
@@ -471,7 +388,7 @@ retimedData = struct();
     end
 
     
-    % sensor_gps
+    %% sensor_gps
     if any(strcmp(ulogData.TopicNames,'sensor_gps'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(sensor_gps.timestamp))); % Sampling frequency
@@ -497,19 +414,8 @@ retimedData = struct();
         clear sensor_gps_data
         sensor_gps = sensor_gps_retimed;
     end
-    
-    % sensor_rpm
-    if any(strcmp(ulogData.TopicNames,'sensor_rpm'))
-        % Find the original sample rate
-        fs_vec(end+1) = 1/median(diff(seconds(sensor_rpm.timestamp))); % Sampling frequency
-        topicNames_vec{end+1} = 'sensor_rpm';
-        
-        % Retime
-        sensor_rpm_retimed = retime(sensor_rpm, Time, 'nearest');
-        disp('sensor_rpm needs revisited if needed')
-    end
 
-    % vehicle_acceleration
+    %% vehicle_acceleration
     if any(strcmp(ulogData.TopicNames,'vehicle_acceleration'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_acceleration.timestamp))); % Sampling frequency
@@ -520,7 +426,7 @@ retimedData = struct();
         vehicle_acceleration = vehicle_acceleration_retimed;
     end
     
-    % vehicle_air_data
+    %% vehicle_air_data
     if any(strcmp(ulogData.TopicNames,'vehicle_air_data'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_air_data.timestamp))); % Sampling frequency
@@ -529,7 +435,7 @@ retimedData = struct();
         disp('vehicle_air_data')
     end
     
-    % vehicle_angular_velocity
+    %% vehicle_angular_velocity
     if any(strcmp(ulogData.TopicNames,'vehicle_angular_velocity'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_angular_velocity.timestamp))); % Sampling frequency
@@ -540,7 +446,7 @@ retimedData = struct();
         vehicle_angular_velocity = vehicle_angular_velocity_retimed;
     end
     
-    % vehicle_attitude
+    %% vehicle_attitude
     if any(strcmp(ulogData.TopicNames,'vehicle_attitude'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_attitude.timestamp))); % Sampling frequency
@@ -559,7 +465,7 @@ retimedData = struct();
         vehicle_attitude = vehicle_attitude_retimed;
     end
     
-    % vehicle_attitude_setpoint
+    %% vehicle_attitude_setpoint
     if any(strcmp(ulogData.TopicNames,'vehicle_attitude_setpoint'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_attitude_setpoint.timestamp))); % Sampling frequency
@@ -570,7 +476,7 @@ retimedData = struct();
         vehicle_attitude_setpoint = vehicle_attitude_setpoint_retimed;
     end
     
-    % vehicle_control_mode
+    %% vehicle_control_mode
     if any(strcmp(ulogData.TopicNames,'vehicle_control_mode'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_control_mode.timestamp))); % Sampling frequency
@@ -581,7 +487,7 @@ retimedData = struct();
         vehicle_control_mode = vehicle_control_mode_retimed;
     end
     
-    % vehicle_global_position
+    %% vehicle_global_position
     if any(strcmp(ulogData.TopicNames,'vehicle_global_position'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_global_position.timestamp))); % Sampling frequency
@@ -596,7 +502,7 @@ retimedData = struct();
         vehicle_global_position = vehicle_global_position_retimed;
     end
     
-    % vehicle_local_position
+    %% vehicle_local_position
     if any(strcmp(ulogData.TopicNames,'vehicle_local_position'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_local_position.timestamp))); % Sampling frequency
@@ -616,7 +522,7 @@ retimedData = struct();
         vehicle_local_position = vehicle_local_position_retimed;
     end
     
-    % vehicle_local_position_setpoint
+    %% vehicle_local_position_setpoint
     if any(strcmp(ulogData.TopicNames,'vehicle_local_position_setpoint'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_local_position_setpoint.timestamp))); % Sampling frequency
@@ -627,7 +533,7 @@ retimedData = struct();
         vehicle_local_position_setpoint = vehicle_local_position_setpoint_retimed;
     end
     
-    % vehicle_rates_setpoint
+    %% vehicle_rates_setpoint
     if any(strcmp(ulogData.TopicNames,'vehicle_rates_setpoint'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_attitude.timestamp))); % Sampling frequency
@@ -636,7 +542,7 @@ retimedData = struct();
         disp('vehicle_rates_setpoint')
     end
     
-    % vehicle_status
+    %% vehicle_status
     if any(strcmp(ulogData.TopicNames,'vehicle_status'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_status.timestamp))); % Sampling frequency
@@ -647,7 +553,7 @@ retimedData = struct();
         vehicle_status = vehicle_status_retimed;
     end
     
-    % vehicle_torque_setpoint
+    %% vehicle_torque_setpoint
     if any(strcmp(ulogData.TopicNames,'vehicle_torque_setpoint'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_torque_setpoint.timestamp))); % Sampling frequency
@@ -655,7 +561,7 @@ retimedData = struct();
         disp('vehicle_torque_setpoint')
     end
     
-    % vehicle_thrust_setpoint
+    %% vehicle_thrust_setpoint
     if any(strcmp(ulogData.TopicNames,'vehicle_thrust_setpoint'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(vehicle_thrust_setpoint.timestamp))); % Sampling frequency
@@ -663,7 +569,7 @@ retimedData = struct();
         disp('vehicle_thrust_setpoint')
     end
     
-    % yaw_estimator_status
+    %% yaw_estimator_status
     if any(strcmp(ulogData.TopicNames,'yaw_estimator_status'))
         % Find the original sample rate
         fs_vec(end+1) = 1/median(diff(seconds(yaw_estimator_status.timestamp))); % Sampling frequency
